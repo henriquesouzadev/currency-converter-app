@@ -28,3 +28,70 @@
       - Para obter a key e fazer requests, você terá que fazer login e escolher
         o plano free. Seus dados de cartão de crédito não serão solicitados.
 */
+
+const currencyOneContainer = document.querySelector('[data-js="currency-one"]')
+const currencyTwoContainer = document.querySelector('[data-js="currency-two"]')
+const currencyOneTimesContainer = document.querySelector('[data-js="currency-one-times"]')
+const convertedValueContainer = document.querySelector('[data-js="converted-value"]')
+const conversionPrecisionContainer = document.querySelector('[data-js="conversion-precision"]')
+
+const fetchCurrencyData = async () => {
+  const response = await fetch(`https://v6.exchangerate-api.com/v6/675a3f5f5f80c0d9f1908dbb/latest/USD`)
+  return response.json()
+}
+
+const calculateConvertedValue = (currencyOne, currencyTwo) => {
+  const result = currencyOne.value * currencyTwo.value
+  const formattedResult = result.toFixed(2)
+
+  return formattedResult
+}
+
+const showConvertedValue = () => {
+  const result = calculateConvertedValue(currencyOneContainer, currencyTwoContainer)
+  convertedValueContainer.textContent = result
+}
+
+const showConversionPrecision = (currencyOne, currencyTwo) => {
+  const currencyOneName = currencyOne.selectedOptions[0].textContent
+  const currencyTwoName = currencyTwo.selectedOptions[0].textContent
+  const conversionPrecisionText = `${currencyOne.value} ${currencyOneName} = ${currencyTwo.value} ${currencyTwoName}`
+
+  conversionPrecisionContainer.textContent = conversionPrecisionText
+}
+ 
+const loadOptions = async () => {
+  const { conversion_rates } = await fetchCurrencyData()
+
+  Object.entries(conversion_rates).forEach(([key, value]) => {
+    currencyOneContainer.innerHTML += key === 'USD'
+      ? `<option value="${value}" selected>${key}</option>`
+      : `<option value="${value}">${key}</option>`
+
+    currencyTwoContainer.innerHTML += key === 'BRL'
+      ? `<option value="${value}" selected>${key}</option>`
+      : `<option value="${value}">${key}</option>`
+  })
+
+  showConvertedValue(currencyOneContainer, currencyTwoContainer)
+  showConversionPrecision(currencyOneContainer, currencyTwoContainer)
+}
+
+currencyOneContainer.addEventListener('change', () => {
+  showConvertedValue(currencyOneContainer, currencyTwoContainer)
+  showConversionPrecision(currencyOneContainer, currencyTwoContainer)
+})
+
+currencyTwoContainer.addEventListener('change', () => {
+  showConvertedValue(currencyOneContainer, currencyTwoContainer)
+  showConversionPrecision(currencyOneContainer, currencyTwoContainer)
+})
+
+currencyOneTimesContainer.addEventListener('change', () => {
+  const convertedValue = calculateConvertedValue(currencyOneContainer, currencyTwoContainer)
+  const finalResult = convertedValue * currencyOneTimesContainer.value
+
+  convertedValueContainer.textContent = finalResult.toFixed(2)
+})
+
+loadOptions()
